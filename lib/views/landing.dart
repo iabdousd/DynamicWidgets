@@ -13,13 +13,24 @@ class LandingView extends GetView<LandingController> {
       appBar: AppBar(
         title: const Text('Dynamic Widgets Builder'),
         actions: [
-          TextButton(onPressed: controller.import, child: const Text('Import')),
+          ElevatedButton(
+            onPressed: controller.clear,
+            child: const Text('Clear'),
+          ),
+          ElevatedButton(
+            onPressed: controller.import,
+            child: const Text('Import'),
+          ),
+          ElevatedButton(
+            onPressed: controller.export,
+            child: const Text('Export'),
+          ),
         ],
       ),
       body: Row(
         children: const [
           Expanded(
-            flex: 4,
+            flex: 5,
             child: WidgetsPreview(),
           ),
           Expanded(

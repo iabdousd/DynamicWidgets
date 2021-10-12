@@ -58,8 +58,8 @@ class DynamicWidget {
             url: map['url'],
             width: map['width'],
             height: map['height'],
-            maxWidth: map['maxWidth'] ?? double.infinity,
-            maxHeight: map['maxHeight'] ?? double.infinity,
+            maxWidth: map['maxWidth']?.toDouble() ?? double.infinity,
+            maxHeight: map['maxHeight']?.toDouble() ?? double.infinity,
             alignment: AlignmentSerializer.fromString(map['alignment']),
           );
         }
@@ -127,7 +127,7 @@ class ImageWidget extends DynamicWidget {
     this.alignment = Alignment.center,
   }) : super(
           name: name,
-          type: DynamicWidgetType.text,
+          type: DynamicWidgetType.image,
           margin: margin,
         );
 
@@ -138,8 +138,8 @@ class ImageWidget extends DynamicWidget {
       'url': url,
       'width': width,
       'height': height,
-      'maxWidth': maxWidth,
-      'maxHeight': maxHeight,
+      'maxWidth': maxWidth == double.infinity ? null : maxWidth,
+      'maxHeight': maxHeight == double.infinity ? null : maxHeight,
       'alignment': alignment.asString,
     };
   }

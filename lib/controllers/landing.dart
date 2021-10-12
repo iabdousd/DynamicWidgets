@@ -1,9 +1,16 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dynamic_widgets_app/models/dynamic_widgets/dynamic_widget.dart';
 import 'package:dynamic_widgets_app/models/views/preview.dart';
+import 'package:dynamic_widgets_app/utils/json.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class LandingController extends GetxController {
+  final sidebarScrollController = ScrollController();
   late PreviewConfig config;
 
   @override
@@ -12,8 +19,101 @@ class LandingController extends GetxController {
     config = PreviewConfig();
   }
 
-  void import() {
-    //
+  void clear() {
+    config.widgets = [];
+    update();
+  }
+
+  void import() async {
+    List<Map<String, dynamic>> jsonData =
+        config.widgets.map((e) => e.toMap()).toList();
+
+    final import = await Get.dialog<bool>(AlertDialog(
+      title: const Text('IMPORT AS JSON'),
+      content: SizedBox(
+        width: Get.width * .75,
+        child: TextFormField(
+          initialValue: JsonUtils.getPrettyJSONString(jsonData),
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            alignLabelWithHint: false,
+          ),
+          minLines: 8,
+          maxLines: null,
+          validator: (val) {
+            if (val != null) {
+              try {
+                json.decode(val);
+                return null;
+              } catch (e) {
+                //
+              }
+            }
+            return 'Invalid syntax';
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          onChanged: (value) {
+            if (value.isNotEmpty) {
+              try {
+                jsonData = List<Map<String, dynamic>>.from(json.decode(value));
+              } catch (e) {
+                //* Ignored
+              }
+            }
+          },
+        ),
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: () => Get.back(result: false),
+          child: const Text('Submit'),
+        ),
+        TextButton(
+          onPressed: () => Get.back(result: true),
+          child: const Text('Choose file'),
+        ),
+      ],
+    ));
+
+    if (import == null) return;
+
+    if (import) {
+      final result = await FilePicker.platform.pickFiles();
+
+      if (result != null) {
+        final jsonFile = result.files.first;
+        if (jsonFile.path != null) {
+          jsonData = List<Map<String, dynamic>>.from(json.decode(utf8.decode(
+            File(jsonFile.path!).readAsBytesSync(),
+          )));
+        }
+      }
+    }
+
+    config.widgets = List<DynamicWidget>.from(
+      jsonData.map((e) => DynamicWidget.fromMap(e)),
+    );
+    update();
+  }
+
+  void export() async {
+    final jsonData = json.encode(config.widgets.map((e) => e.toMap()).toList());
+    Get.dialog(AlertDialog(
+      title: const Text('EXPORTED JSON'),
+      content: SelectableText(
+        jsonData,
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: () => Clipboard.setData(ClipboardData(text: jsonData)),
+          child: const Text('Copy'),
+        ),
+        TextButton(
+          onPressed: Get.back,
+          child: const Text('Close'),
+        ),
+      ],
+    ));
   }
 
   void changeDeviceType(DeviceType newType) {
@@ -27,14 +127,14 @@ class LandingController extends GetxController {
         config.widgets.add(TextWidget(
           text: '(Enter text here)',
           name: 'Widget #${config.widgets.length + 1}',
-          margin: const EdgeInsets.all(16.0),
+          margin: const EdgeInsets.symmetric(vertical: 16.0),
         ));
         break;
       case DynamicWidgetType.image:
         config.widgets.add(ImageWidget(
           url: 'https://i.stack.imgur.com/y9DpT.jpg',
           name: 'Widget #${config.widgets.length + 1}',
-          margin: const EdgeInsets.all(16.0),
+          margin: const EdgeInsets.symmetric(vertical: 16.0),
         ));
         break;
       default:
@@ -69,7 +169,7 @@ class LandingController extends GetxController {
   void updateImageDimension(
     int widgetIndex,
     ImageDimension dimension,
-    double value,
+    double? value,
   ) {
     ImageWidget newImage = config.widgets[widgetIndex] as ImageWidget;
 
@@ -81,10 +181,10 @@ class LandingController extends GetxController {
         newImage.height = value;
         break;
       case ImageDimension.maxWidth:
-        newImage.maxWidth = value;
+        newImage.maxWidth = value ?? double.infinity;
         break;
       case ImageDimension.maxHeight:
-        newImage.maxHeight = value;
+        newImage.maxHeight = value ?? double.infinity;
         break;
     }
 
@@ -119,6 +219,13 @@ class LandingController extends GetxController {
       widgetIndex + 1,
       [config.widgets[widgetIndex]..margin = newMargin],
     );
+    update();
+  }
+
+  swap(int index) {
+    final temp = config.widgets[index];
+    config.widgets.replaceRange(index, index + 1, [config.widgets[index + 1]]);
+    config.widgets.replaceRange(index + 1, index + 2, [temp]);
     update();
   }
 }

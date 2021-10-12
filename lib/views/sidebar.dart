@@ -27,9 +27,30 @@ class SideBar extends GetWidget<LandingController> {
           Expanded(
             child: GetBuilder<LandingController>(
               builder: (controller) {
-                return ListView.builder(
-                  itemBuilder: (context, index) =>
-                      _WidgetConfiguration(index: index),
+                if (controller.config.widgets.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No widgets yet',
+                      style: Get.theme.textTheme.subtitle1,
+                    ),
+                  );
+                }
+                return ListView.separated(
+                  controller: controller.sidebarScrollController,
+                  itemBuilder: (context, index) => _WidgetConfiguration(
+                    key: Key(controller.config.widgets[index].name),
+                    index: index,
+                  ),
+                  separatorBuilder: (context, index) => Row(
+                    children: [
+                      const Expanded(child: Divider(height: 32)),
+                      TextButton(
+                        child: const Text('Swap'),
+                        onPressed: () => controller.swap(index),
+                      ),
+                      const Expanded(child: Divider(height: 32)),
+                    ],
+                  ),
                   itemCount: controller.config.widgets.length,
                 );
               },
@@ -80,7 +101,6 @@ class _WidgetConfiguration extends GetWidget<LandingController> {
         borderRadius: BorderRadius.circular(4),
       ),
       padding: const EdgeInsets.all(12.0),
-      margin: const EdgeInsets.only(bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -192,6 +212,7 @@ class _TextConfig extends GetWidget<LandingController> {
           },
           validator: InputValidators.textValdiator,
           autovalidateMode: AutovalidateMode.onUserInteraction,
+          maxLines: null,
         ),
       ],
     );
@@ -258,17 +279,18 @@ class _ImageDimensionsConfig extends GetWidget<LandingController> {
                         labelText: dimension.name,
                       ),
                       onChanged: (val) {
-                        if (InputValidators.isNumberValdiator(val) != null) {
+                        if (val.isNotEmpty &&
+                            InputValidators.isDimensionValdiator(val) != null) {
                           return;
                         }
 
                         controller.updateImageDimension(
                           index,
                           dimension,
-                          double.parse(val),
+                          val.isEmpty ? null : double.parse(val),
                         );
                       },
-                      validator: InputValidators.isNumberValdiator,
+                      validator: InputValidators.isDimensionValdiator,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                     ),
                   ),

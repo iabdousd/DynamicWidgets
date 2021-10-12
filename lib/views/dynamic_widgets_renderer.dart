@@ -1,6 +1,7 @@
 import 'package:dynamic_widgets_app/controllers/landing.dart';
 import 'package:dynamic_widgets_app/models/dynamic_widgets/dynamic_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class DynamicWidgetsRenderer extends StatelessWidget {
@@ -31,17 +32,25 @@ class DynamicWidgetsRenderer extends StatelessWidget {
                   return Padding(
                     key: Key(widget.name),
                     padding: widget.margin,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: widget.maxWidth,
-                        maxHeight: widget.maxHeight,
+                    child: Align(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: widget.maxWidth,
+                          maxHeight: widget.maxHeight,
+                        ),
+                        child: widget.url.endsWith('svg')
+                            ? SvgPicture.network(
+                                widget.url,
+                                width: widget.width,
+                                height: widget.height,
+                              )
+                            : Image.network(
+                                widget.url,
+                                width: widget.width,
+                                height: widget.height,
+                              ),
                       ),
-                      child: Image.network(
-                        widget.url,
-                        width: widget.width,
-                        height: widget.height,
-                        alignment: widget.alignment,
-                      ),
+                      alignment: widget.alignment,
                     ),
                   );
                 },

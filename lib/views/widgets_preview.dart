@@ -111,6 +111,7 @@ class _ContentPreviewer extends GetWidget<LandingController> {
           width: deviceType == DeviceType.desktop ? double.infinity : 512,
           height: double.infinity,
           margin: const EdgeInsets.all(32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: const [
